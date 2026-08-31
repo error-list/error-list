@@ -51,9 +51,9 @@ export async function signOut() {
 
 /** Returns the logged-in user's auth info, or null if signed out. */
 export async function getCurrentUser() {
-  const { data, error } = await client().auth.getUser();
+  const { data, error } = await client().auth.getSession();
   if (error) throw error;
-  return data.user;
+  return data.session?.user ?? null;
 }
 
 /** Returns the logged-in user's profile row (username, role, banned), or null. */
