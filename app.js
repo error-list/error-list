@@ -117,6 +117,7 @@ async function loadDemonList() {
             ${d.publisher ? `by ${escapeHTML(d.publisher)}` : ''}
             ${d.verifier ? ` &middot; verified by ${escapeHTML(d.verifier)}` : ''}
             ${d.video_url ? ` &middot; <a href="${d.video_url}" target="_blank" rel="noopener">video</a>` : ''}
+            ${d.level_id ? ` &middot; ID ${escapeHTML(String(d.level_id))}` : ''}
           </div>
         </div>
         <div class="points">${d.points} pts</div>
@@ -297,6 +298,7 @@ async function loadManageDemons() {
     <tr>
       <td>${d.position}</td>
       <td>${escapeHTML(d.name)}</td>
+      <td>${d.level_id ? escapeHTML(String(d.level_id)) : '—'}</td>
       <td>${d.points}</td>
       <td><button class="mini-btn reject" data-delete-id="${d.id}">Delete</button></td>
     </tr>
