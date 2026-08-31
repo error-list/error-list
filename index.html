@@ -36,7 +36,7 @@
       <h1>Leaderboard</h1>
       <p class="subtext">Ranked by points earned from approved 100% completions.</p>
       <table class="board">
-        <thead><tr><th>#</th><th>Player</th><th>Points</th><th>Demons</th></tr></thead>
+        <thead><tr><th>#</th><th>Player</th><th>Points</th><th>Levels</th></tr></thead>
         <tbody id="leaderboard-body"><tr><td colspan="4">Loading&hellip;</td></tr></tbody>
       </table>
     </section>
@@ -48,7 +48,7 @@
         You need to <button class="link-btn" data-view="account">log in</button> before submitting a record.
       </div>
       <form id="submit-form" class="form hidden">
-        <label>Demon
+        <label>Level
           <select id="submit-demon" required></select>
         </label>
         <label>Progress %
@@ -63,7 +63,7 @@
 
       <h2>Your Records</h2>
       <table class="board" id="my-records-table">
-        <thead><tr><th>Demon</th><th>Progress</th><th>Status</th><th>Note</th></tr></thead>
+        <thead><tr><th>Level</th><th>Progress</th><th>Status</th><th>Note</th></tr></thead>
         <tbody id="my-records-body"><tr><td colspan="4">Log in to see your records.</td></tr></tbody>
       </table>
 
@@ -136,7 +136,7 @@
 
       <h2>Pending Records</h2>
       <table class="board" id="pending-table">
-        <thead><tr><th>Player</th><th>Demon</th><th>Progress</th><th>Video</th><th>Action</th></tr></thead>
+        <thead><tr><th>Player</th><th>Level</th><th>Progress</th><th>Video</th><th>Action</th></tr></thead>
         <tbody id="pending-body"><tr><td colspan="5">Loading&hellip;</td></tr></tbody>
       </table>
 
