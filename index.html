@@ -1,18 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ERROR List</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ERROR List</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>ERROR List</h1>
 
-  <div id="auth-status">Checking login status...</div>
+  <header class="site-header">
+    <div class="wordmark">
+      <span class="bracket">[</span>ERROR<span class="bracket">]</span>
+      <span class="wordmark-sub">LIST</span>
+    </div>
+    <nav class="tabs" id="nav-tabs">
+      <button class="tab active" data-view="list">List</button>
+      <button class="tab" data-view="leaderboard">Leaderboard</button>
+      <button class="tab" data-view="submit">Submit Record</button>
+      <button class="tab" data-view="account">Account</button>
+      <button class="tab hidden" data-view="admin" id="nav-admin">Staff</button>
+    </nav>
+  </header>
 
-  <h2>Demon List</h2>
-  <ul id="demon-list">Loading...</ul>
+  <main id="app">
 
-  <!-- Load in order: connect to Supabase first, then run app logic -->
+    <!-- LIST -->
+    <section class="view active" id="view-list">
+      <h1>The List</h1>
+      <p class="subtext">Ranked hardest to easiest.</p>
+      <div id="demon-list" class="demon-list">Loading&hellip;</div>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section class="view" id="view-leaderboard">
+      <h1>Leaderboard</h1>
+      <p class="subtext">Ranked by points earned from approved 100% completions.</p>
+      <table class="board">
+        <thead><tr><th>#</th><th>Player</th><th>Points</th><th>Demons</th></tr></thead>
+        <tbody id="leaderboard-body"><tr><td colspan="4">Loading&hellip;</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- SUBMIT RECORD -->
+    <section class="view" id="view-submit">
+      <h1>Submit a Record</h1>
+      <div id="submit-logged-out" class="notice hidden">
+        You need to <button class="link-btn" data-view="account">log in</button> before submitting a record.
+      </div>
+      <form id="submit-form" class="form hidden">
+        <label>Demon
+          <select id="submit-demon" required></select>
+        </label>
+        <label>Progress %
+          <input type="number" id="submit-progress" min="1" max="100" value="100" required />
+        </label>
+        <label>Video URL
+          <input type="url" id="submit-video" placeholder="https://youtube.com/..." required />
+        </label>
+        <button type="submit">Submit for review</button>
+        <p class="form-message" id="submit-message"></p>
+      </form>
+
+      <h2>Your Records</h2>
+      <table class="board" id="my-records-table">
+        <thead><tr><th>Demon</th><th>Progress</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody id="my-records-body"><tr><td colspan="4">Log in to see your records.</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section class="view" id="view-account">
+      <div id="account-logged-out">
+        <h1>Log In / Register</h1>
+        <div class="auth-toggle">
+          <button class="toggle-btn active" data-mode="login">Log In</button>
+          <button class="toggle-btn" data-mode="register">Register</button>
+        </div>
+
+        <form id="login-form" class="form">
+          <label>Email <input type="email" id="login-email" required /></label>
+          <label>Password <input type="password" id="login-password" required /></label>
+          <button type="submit">Log In</button>
+          <p class="form-message" id="login-message"></p>
+        </form>
+
+        <form id="register-form" class="form hidden">
+          <label>Username <input type="text" id="register-username" required /></label>
+          <label>Email <input type="email" id="register-email" required /></label>
+          <label>Password <input type="password" id="register-password" required minlength="6" /></label>
+          <button type="submit">Register</button>
+          <p class="form-message" id="register-message"></p>
+        </form>
+      </div>
+
+      <div id="account-logged-in" class="hidden">
+        <h1>Your Account</h1>
+        <p id="account-details"></p>
+        <button id="logout-btn">Log Out</button>
+      </div>
+    </section>
+
+    <!-- ADMIN / STAFF -->
+    <section class="view" id="view-admin">
+      <h1>Staff Panel</h1>
+
+      <h2>Pending Records</h2>
+      <table class="board" id="pending-table">
+        <thead><tr><th>Player</th><th>Demon</th><th>Progress</th><th>Video</th><th>Action</th></tr></thead>
+        <tbody id="pending-body"><tr><td colspan="5">Loading&hellip;</td></tr></tbody>
+      </table>
+
+      <div id="admin-only" class="hidden">
+        <h2>Add a Demon</h2>
+        <form id="add-demon-form" class="form">
+          <label>Name <input type="text" id="ad-name" required /></label>
+          <label>Position <input type="number" id="ad-position" min="1" required /></label>
+          <label>Video URL <input type="url" id="ad-video" /></label>
+          <label>Publisher <input type="text" id="ad-publisher" /></label>
+          <label>Verifier <input type="text" id="ad-verifier" /></label>
+          <label>Min % to count <input type="number" id="ad-minpercent" min="1" max="100" value="100" /></label>
+          <button type="submit">Add Demon</button>
+          <p class="form-message" id="add-demon-message"></p>
+        </form>
+
+        <h2>Manage Demons</h2>
+        <table class="board" id="manage-demons-table">
+          <thead><tr><th>#</th><th>Name</th><th>Points</th><th>Delete</th></tr></thead>
+          <tbody id="manage-demons-body"><tr><td colspan="4">Loading&hellip;</td></tr></tbody>
+        </table>
+
+        <h2>Change a User's Role</h2>
+        <form id="role-form" class="form">
+          <label>Username <input type="text" id="role-username" required /></label>
+          <label>Role
+            <select id="role-select">
+              <option value="user">user</option>
+              <option value="moderator">moderator</option>
+              <option value="admin">admin</option>
+            </select>
+          </label>
+          <button type="submit">Update Role</button>
+          <p class="form-message" id="role-message"></p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
   <script type="module" src="supabaseClient.js"></script>
   <script type="module" src="app.js"></script>
 </body>

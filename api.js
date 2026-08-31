@@ -8,7 +8,7 @@
 //   npm install @supabase/supabase-js
 // ============================================================================
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 let supabase = null;
 
