@@ -51,9 +51,16 @@ export async function signOut() {
 
 /** Returns the logged-in user's auth info, or null if signed out. */
 export async function getCurrentUser() {
-  const { data, error } = await client().auth.getSession();
-  if (error) throw error;
-  return data.session?.user ?? null;
+  try {
+    const { data, error } = await client().auth.getSession();
+    if (error) throw error;
+    return data.session?.user ?? null;
+  } catch (err) {
+    // Supabase throws instead of returning null when there's no session at all —
+    // treat that specific case as "not logged in" rather than a real error.
+    if (err.name === 'AuthSessionMissingError') return null;
+    throw err;
+  }
 }
 
 /** Returns the logged-in user's profile row (username, role, banned), or null. */
