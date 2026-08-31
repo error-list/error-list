@@ -230,6 +230,27 @@ export async function reviewRecord(id, { status, rejectReason }) {
   return data;
 }
 
+/** Staff only: every record regardless of status/player, for management/deletion. Optional username filter. */
+export async function getAllRecords(usernameFilter) {
+  let query = client()
+    .from('records')
+    .select('*, demons(name, position), profiles!records_player_id_fkey(username)')
+    .order('submitted_at', { ascending: false });
+  const { data, error } = await query;
+  if (error) throw error;
+  if (usernameFilter) {
+    const needle = usernameFilter.trim().toLowerCase();
+    return data.filter(r => r.profiles?.username?.toLowerCase().includes(needle));
+  }
+  return data;
+}
+
+/** Staff only. Permanently deletes a record, regardless of which player it belongs to. */
+export async function deleteRecord(id) {
+  const { error } = await client().from('records').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // ----------------------------------------------------------------------------
 // LEVEL SUBMISSIONS (suggesting a level that isn't on the list yet)
 // ----------------------------------------------------------------------------

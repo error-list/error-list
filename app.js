@@ -3,7 +3,7 @@ import {
   signIn, signUp, signOut,
   getDemonList, addDemon, deleteDemon,
   submitRecord, getMyRecords,
-  getPendingRecords, reviewRecord,
+  getPendingRecords, reviewRecord, getAllRecords, deleteRecord,
   submitLevel, getMyLevelSubmissions,
   getPendingLevelSubmissions, reviewLevelSubmission,
   getLeaderboard, getPlayerProfile, setUserRole,
@@ -289,7 +289,52 @@ async function loadAdminView() {
   } catch (err) {
     levelsBody.innerHTML = `<tr><td colspan="6" class="form-message error">${err.message}</td></tr>`;
   }
+
+  loadAllRecords();
 }
+
+async function loadAllRecords(usernameFilter) {
+  const body = document.getElementById('all-records-body');
+  body.innerHTML = '<tr><td colspan="6">Loading&hellip;</td></tr>';
+  try {
+    const records = await getAllRecords(usernameFilter);
+    body.innerHTML = records.length ? records.map(r => `
+      <tr>
+        <td>${escapeHTML(r.profiles?.username ?? r.player_id)}</td>
+        <td>${escapeHTML(r.demons?.name ?? r.demon_id)}</td>
+        <td>${r.progress}%</td>
+        <td class="status-${r.status}">${escapeHTML(r.status)}</td>
+        <td>${r.video_url ? `<a href="${r.video_url}" target="_blank" rel="noopener">watch</a>` : ''}</td>
+        <td><button class="mini-btn reject" data-delete-record-id="${r.id}">Delete</button></td>
+      </tr>
+    `).join('') : '<tr><td colspan="6">No records found.</td></tr>';
+
+    body.querySelectorAll('[data-delete-record-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Permanently delete this record?')) return;
+        try {
+          await deleteRecord(Number(btn.dataset.deleteRecordId));
+          loadAllRecords(document.getElementById('records-filter').value);
+          loadAdminView();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="6" class="form-message error">${err.message}</td></tr>`;
+  }
+}
+
+document.getElementById('records-filter-btn').addEventListener('click', () => {
+  loadAllRecords(document.getElementById('records-filter').value);
+});
+document.getElementById('records-filter').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    loadAllRecords(document.getElementById('records-filter').value);
+  }
+});
 
 async function loadManageDemons() {
   const body = document.getElementById('manage-demons-body');

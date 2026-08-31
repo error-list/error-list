@@ -140,6 +140,19 @@
         <tbody id="pending-body"><tr><td colspan="5">Loading&hellip;</td></tr></tbody>
       </table>
 
+      <h2>All Records</h2>
+      <p class="subtext">Search by player and delete any record, regardless of status.</p>
+      <div class="form" style="flex-direction: row; align-items: flex-end; gap: 10px;">
+        <label style="flex: 1;">Player username
+          <input type="text" id="records-filter" placeholder="Leave blank for all players" />
+        </label>
+        <button type="button" id="records-filter-btn">Search</button>
+      </div>
+      <table class="board" id="all-records-table">
+        <thead><tr><th>Player</th><th>Level</th><th>Progress</th><th>Status</th><th>Video</th><th>Delete</th></tr></thead>
+        <tbody id="all-records-body"><tr><td colspan="6">Loading&hellip;</td></tr></tbody>
+      </table>
+
       <h2>Pending Level Suggestions</h2>
       <table class="board" id="pending-levels-table">
         <thead><tr><th>Suggested by</th><th>Level</th><th>Creator</th><th>Video</th><th>Note</th><th>Action</th></tr></thead>
