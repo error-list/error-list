@@ -41,7 +41,7 @@ async function refreshAuthUI() {
     loggedOut.classList.add('hidden');
     loggedIn.classList.remove('hidden');
     document.getElementById('account-details').textContent =
-      `Logged in as ${currentProfile.username} (${currentProfile.email ?? user.email}) — role: ${currentProfile.role}`;
+      `Logged in as ${currentProfile.username} — role: ${currentProfile.role}`;
     adminTab.classList.toggle('hidden', currentProfile.role === 'user');
   } else {
     currentProfile = null;
@@ -74,7 +74,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   msg.textContent = ''; msg.className = 'form-message';
   try {
     await signIn({
-      email: document.getElementById('login-email').value,
+      username: document.getElementById('login-username').value,
       password: document.getElementById('login-password').value,
     });
     msg.textContent = 'Logged in!'; msg.classList.add('success');
@@ -90,10 +90,9 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   try {
     await signUp({
       username: document.getElementById('register-username').value,
-      email: document.getElementById('register-email').value,
       password: document.getElementById('register-password').value,
     });
-    msg.textContent = 'Registered! Check your email if confirmation is required, then log in.';
+    msg.textContent = 'Registered! You can log in now.';
     msg.classList.add('success');
   } catch (err) {
     msg.textContent = err.message; msg.classList.add('error');
