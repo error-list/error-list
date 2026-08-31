@@ -23,14 +23,23 @@ function client() {
   return supabase;
 }
 
+// Supabase's auth is built around email/password under the hood. Since ERROR
+// List is username-only, we derive a consistent, hidden fake email from the
+// username so the frontend never has to show or ask for a real one.
+function emailFromUsername(username) {
+  const slug = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!slug) throw new Error('Username must contain at least one letter or number.');
+  return `${slug}@errorlist.local`;
+}
+
 // ----------------------------------------------------------------------------
 // AUTH
 // ----------------------------------------------------------------------------
 
-/** Register a new account. `username` is stored on their profile automatically. */
-export async function signUp({ email, password, username }) {
+/** Register a new account with just a username and password. */
+export async function signUp({ username, password }) {
   const { data, error } = await client().auth.signUp({
-    email,
+    email: emailFromUsername(username),
     password,
     options: { data: { username } },
   });
@@ -38,8 +47,12 @@ export async function signUp({ email, password, username }) {
   return data;
 }
 
-export async function signIn({ email, password }) {
-  const { data, error } = await client().auth.signInWithPassword({ email, password });
+/** Log in with username and password. */
+export async function signIn({ username, password }) {
+  const { data, error } = await client().auth.signInWithPassword({
+    email: emailFromUsername(username),
+    password,
+  });
   if (error) throw error;
   return data;
 }
