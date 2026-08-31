@@ -66,6 +66,37 @@
         <thead><tr><th>Demon</th><th>Progress</th><th>Status</th><th>Note</th></tr></thead>
         <tbody id="my-records-body"><tr><td colspan="4">Log in to see your records.</td></tr></tbody>
       </table>
+
+      <h2>Suggest a Level for the List</h2>
+      <p class="subtext">Isn't on the list yet? Suggest it here — staff will review and add it.</p>
+      <div id="suggest-logged-out" class="notice hidden">
+        You need to <button class="link-btn" data-view="account">log in</button> before suggesting a level.
+      </div>
+      <form id="suggest-form" class="form hidden">
+        <label>Level name
+          <input type="text" id="suggest-name" required />
+        </label>
+        <label>GD Level ID
+          <input type="number" id="suggest-levelid" />
+        </label>
+        <label>Video URL
+          <input type="url" id="suggest-video" placeholder="https://youtube.com/..." required />
+        </label>
+        <label>Creator
+          <input type="text" id="suggest-creator" />
+        </label>
+        <label>Note (why it should be added, roughly how hard, etc.)
+          <input type="text" id="suggest-note" />
+        </label>
+        <button type="submit">Suggest level</button>
+        <p class="form-message" id="suggest-message"></p>
+      </form>
+
+      <h2>Your Suggestions</h2>
+      <table class="board" id="my-suggestions-table">
+        <thead><tr><th>Level</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody id="my-suggestions-body"><tr><td colspan="3">Log in to see your suggestions.</td></tr></tbody>
+      </table>
     </section>
 
     <!-- ACCOUNT -->
@@ -109,6 +140,12 @@
         <tbody id="pending-body"><tr><td colspan="5">Loading&hellip;</td></tr></tbody>
       </table>
 
+      <h2>Pending Level Suggestions</h2>
+      <table class="board" id="pending-levels-table">
+        <thead><tr><th>Suggested by</th><th>Level</th><th>Creator</th><th>Video</th><th>Note</th><th>Action</th></tr></thead>
+        <tbody id="pending-levels-body"><tr><td colspan="6">Loading&hellip;</td></tr></tbody>
+      </table>
+
       <div id="admin-only" class="hidden">
         <h2>Add a Level</h2>
         <form id="add-demon-form" class="form">
@@ -118,11 +155,11 @@
           <label>Publisher <input type="text" id="ad-publisher" /></label>
           <label>Verifier <input type="text" id="ad-verifier" /></label>
           <label>Min % to count <input type="number" id="ad-minpercent" min="1" max="100" value="100" /></label>
-          <button type="submit">Add Level</button>
+          <button type="submit">Add level</button>
           <p class="form-message" id="add-demon-message"></p>
         </form>
 
-        <h2>Manage Demons</h2>
+        <h2>Manage Level</h2>
         <table class="board" id="manage-demons-table">
           <thead><tr><th>#</th><th>Name</th><th>Points</th><th>Delete</th></tr></thead>
           <tbody id="manage-demons-body"><tr><td colspan="4">Loading&hellip;</td></tr></tbody>
