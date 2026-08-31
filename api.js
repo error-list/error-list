@@ -193,7 +193,7 @@ export async function getMyRecords() {
 export async function getRecordsForDemon(demonId) {
   const { data, error } = await client()
     .from('records')
-    .select('*, profiles(username)')
+    .select('*, profiles!records_player_id_fkey(username)')
     .eq('demon_id', demonId)
     .eq('status', 'approved')
     .order('progress', { ascending: false });
@@ -205,7 +205,7 @@ export async function getRecordsForDemon(demonId) {
 export async function getPendingRecords() {
   const { data, error } = await client()
     .from('records')
-    .select('*, demons(name, position), profiles(username)')
+    .select('*, demons(name, position), profiles!records_player_id_fkey(username)')
     .eq('status', 'pending')
     .order('submitted_at', { ascending: true });
   if (error) throw error;
@@ -217,6 +217,73 @@ export async function reviewRecord(id, { status, rejectReason }) {
   const user = await getCurrentUser();
   const { data, error } = await client()
     .from('records')
+    .update({
+      status,
+      reject_reason: rejectReason ?? null,
+      reviewed_by: user?.id ?? null,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ----------------------------------------------------------------------------
+// LEVEL SUBMISSIONS (suggesting a level that isn't on the list yet)
+// ----------------------------------------------------------------------------
+
+/** Suggest a level for the list. Starts out "pending" for staff review. */
+export async function submitLevel({ levelName, levelId, videoUrl, creator, note }) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error('You must be logged in to suggest a level.');
+
+  const { data, error } = await client()
+    .from('level_submissions')
+    .insert({
+      submitted_by: user.id,
+      level_name: levelName,
+      level_id: levelId || null,
+      video_url: videoUrl,
+      creator: creator || null,
+      note: note || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/** The current user's own suggested levels, any status, newest first. */
+export async function getMyLevelSubmissions() {
+  const user = await getCurrentUser();
+  if (!user) return [];
+  const { data, error } = await client()
+    .from('level_submissions')
+    .select('*')
+    .eq('submitted_by', user.id)
+    .order('submitted_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+/** Staff only: the level-suggestion review queue. */
+export async function getPendingLevelSubmissions() {
+  const { data, error } = await client()
+    .from('level_submissions')
+    .select('*, profiles!level_submissions_submitted_by_fkey(username)')
+    .eq('status', 'pending')
+    .order('submitted_at', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+/** Staff only. status is 'approved' or 'rejected'; rejectReason optional. */
+export async function reviewLevelSubmission(id, { status, rejectReason }) {
+  const user = await getCurrentUser();
+  const { data, error } = await client()
+    .from('level_submissions')
     .update({
       status,
       reject_reason: rejectReason ?? null,
