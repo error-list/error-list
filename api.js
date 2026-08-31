@@ -208,7 +208,7 @@ export async function getMyRecords() {
 export async function getRecordsForDemon(demonId) {
   const { data, error } = await client()
     .from('records')
-    .select('*, profiles!records_player_id_fkey(username)')
+    .select('*, profiles!records_player_id_fkey(username, display_name, nationality, clan)')
     .eq('demon_id', demonId)
     .eq('status', 'approved')
     .order('progress', { ascending: false });
@@ -220,7 +220,7 @@ export async function getRecordsForDemon(demonId) {
 export async function getPendingRecords() {
   const { data, error } = await client()
     .from('records')
-    .select('*, demons(name, position), profiles!records_player_id_fkey(username)')
+    .select('*, demons(name, position), profiles!records_player_id_fkey(username, display_name, nationality, clan)')
     .eq('status', 'pending')
     .order('submitted_at', { ascending: true });
   if (error) throw error;
@@ -249,7 +249,7 @@ export async function reviewRecord(id, { status, rejectReason }) {
 export async function getAllRecords(usernameFilter) {
   let query = client()
     .from('records')
-    .select('*, demons(name, position), profiles!records_player_id_fkey(username)')
+    .select('*, demons(name, position), profiles!records_player_id_fkey(username, display_name, nationality, clan)')
     .order('submitted_at', { ascending: false });
   const { data, error } = await query;
   if (error) throw error;
@@ -308,7 +308,7 @@ export async function getMyLevelSubmissions() {
 export async function getPendingLevelSubmissions() {
   const { data, error } = await client()
     .from('level_submissions')
-    .select('*, profiles!level_submissions_submitted_by_fkey(username)')
+    .select('*, profiles!level_submissions_submitted_by_fkey(username, display_name, nationality, clan)')
     .eq('status', 'pending')
     .order('submitted_at', { ascending: true });
   if (error) throw error;
@@ -337,11 +337,37 @@ export async function reviewLevelSubmission(id, { status, rejectReason }) {
 // LEADERBOARD & PROFILES
 // ----------------------------------------------------------------------------
 
-/** Global leaderboard, highest points first. */
+/**
+ * Global leaderboard, highest points first. Computed directly from records +
+ * demons + profiles (not from a separate DB view) so it always reflects
+ * whatever profile fields exist, including display name / nationality / clan.
+ * Counts each player's approved 100% completions.
+ */
 export async function getLeaderboard() {
-  const { data, error } = await client().from('leaderboard').select('*');
+  const { data, error } = await client()
+    .from('records')
+    .select('player_id, progress, demons(points), profiles!records_player_id_fkey(username, display_name, nationality, clan)')
+    .eq('status', 'approved')
+    .eq('progress', 100);
   if (error) throw error;
-  return data;
+
+  const byPlayer = new Map();
+  for (const r of data) {
+    const key = r.player_id;
+    const entry = byPlayer.get(key) ?? {
+      username: r.profiles?.username,
+      display_name: r.profiles?.display_name,
+      nationality: r.profiles?.nationality,
+      clan: r.profiles?.clan,
+      points: 0,
+      demons_completed: 0,
+    };
+    entry.points += r.demons?.points ?? 0;
+    entry.demons_completed += 1;
+    byPlayer.set(key, entry);
+  }
+
+  return Array.from(byPlayer.values()).sort((a, b) => b.points - a.points);
 }
 
 export async function getPlayerProfile(username) {

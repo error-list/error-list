@@ -74,7 +74,9 @@ h2 { font-size: 16px; color: var(--text-dim); margin: 40px 0 12px; text-transfor
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 14px 18px;
+  cursor: pointer;
 }
+.demon-row:hover { border-color: var(--error-dim); background: var(--surface-raised); }
 .demon-row .pos {
   font-size: 18px;
   font-weight: 700;
@@ -108,6 +110,45 @@ table.board th { color: var(--text-dim); font-weight: 400; }
 .status-pending { color: var(--amber); }
 .status-approved { color: var(--green); }
 .status-rejected { color: var(--error); }
+
+.player-cell { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.flag-icon { width: 20px; height: 15px; object-fit: cover; border-radius: 2px; border: 1px solid var(--border); vertical-align: middle; flex-shrink: 0; }
+.clan-tag { color: var(--text-dim); font-weight: 600; }
+.player-name { color: var(--text); }
+.points-cell { color: var(--amber); font-weight: 600; }
+
+.back-link { margin-bottom: 20px; display: inline-block; }
+
+.level-title-row { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+.level-title-row .pos { font-size: 20px; font-weight: 700; color: var(--error); }
+.level-title-row h1 { margin: 0; }
+
+.video-embed {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  margin: 20px 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+.level-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+.level-stats > div {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 16px;
+}
+.stat-label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { display: block; font-size: 16px; margin-top: 2px; }
 
 .form {
   display: flex;

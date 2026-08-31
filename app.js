@@ -1,8 +1,8 @@
 import {
   getCurrentUser, getCurrentProfile, onAuthChange,
   signIn, signUp, signOut, updateMyProfile,
-  getDemonList, addDemon, deleteDemon,
-  submitRecord, getMyRecords,
+  getDemonList, getDemon, addDemon, deleteDemon,
+  submitRecord, getMyRecords, getRecordsForDemon,
   getPendingRecords, reviewRecord, getAllRecords, deleteRecord,
   submitLevel, getMyLevelSubmissions,
   getPendingLevelSubmissions, reviewLevelSubmission,
@@ -18,6 +18,13 @@ const COUNTRY_CODES = ["AD","AE","AF","AG","AI","AL","AM","AO","AR","AS","AT","A
 
 function flagEmoji(code) {
   return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
+/** <img> tag for a country's flag, e.g. flagImg('US'). Falls back to nothing if no code given. */
+function flagImg(code) {
+  if (!code) return '';
+  const lower = code.toLowerCase();
+  return `<img class="flag-icon" src="flags/${lower}.svg" alt="${code.toUpperCase()}" title="${code.toUpperCase()}" loading="lazy">`;
 }
 
 function populateNationalitySelect() {
@@ -43,6 +50,29 @@ function formatPlayerName(profile) {
   const name = profile.display_name || profile.username;
   const tag = profile.clan ? `[${profile.clan}] ` : '';
   return `${tag}${name}`;
+}
+
+/** Flag + [clan] + name as an HTML snippet, for table cells. Expects a profiles-shaped object. */
+function playerCellHTML(profile) {
+  if (!profile) return '';
+  const flag = profile.nationality ? `${flagImg(profile.nationality)} ` : '';
+  const clan = profile.clan ? `<span class="clan-tag">[${escapeHTML(profile.clan)}]</span> ` : '';
+  const name = escapeHTML(profile.display_name || profile.username || '');
+  return `${flag}${clan}${name}`;
+}
+
+/** Converts a normal YouTube watch/share URL to an embeddable URL. Returns null if it can't. */
+function toYouTubeEmbedUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.pathname.startsWith('/embed/')) return url;
+    let id = null;
+    if (u.hostname.includes('youtu.be')) id = u.pathname.slice(1);
+    else if (u.searchParams.get('v')) id = u.searchParams.get('v');
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+  } catch {
+    return null;
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -167,7 +197,7 @@ async function loadDemonList() {
   try {
     const demons = await getDemonList();
     el.innerHTML = demons.length ? demons.map(d => `
-      <div class="demon-row">
+      <div class="demon-row" data-demon-id="${d.id}">
         <div class="pos">#${d.position}</div>
         <div class="info">
           <div class="name">${escapeHTML(d.name)}</div>
@@ -181,8 +211,77 @@ async function loadDemonList() {
         <div class="points">${d.points} pts</div>
       </div>
     `).join('') : '<p class="subtext">No levels on the list yet.</p>';
+
+    el.querySelectorAll('.demon-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('a')) return; // let the "video" link open normally
+        showLevelDetail(Number(row.dataset.demonId));
+      });
+    });
   } catch (err) {
     el.innerHTML = `<p class="form-message error">Failed to load list: ${err.message}</p>`;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// LEVEL DETAIL
+// ----------------------------------------------------------------------------
+function showLevelDetail(demonId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-level').classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === 'list'));
+  loadLevelDetail(demonId);
+}
+
+document.getElementById('back-to-list').addEventListener('click', () => showView('list'));
+
+async function loadLevelDetail(demonId) {
+  const container = document.getElementById('level-detail');
+  container.innerHTML = 'Loading&hellip;';
+  try {
+    const demon = await getDemon(demonId);
+    const records = await getRecordsForDemon(demonId);
+    const embedUrl = demon.video_url ? toYouTubeEmbedUrl(demon.video_url) : null;
+
+    container.innerHTML = `
+      <div class="level-title-row">
+        <span class="pos">#${demon.position}</span>
+        <h1>${escapeHTML(demon.name)}</h1>
+      </div>
+      <p class="subtext">
+        ${demon.publisher ? `published by ${escapeHTML(demon.publisher)}` : ''}
+        ${demon.verifier ? ` &middot; verified by ${escapeHTML(demon.verifier)}` : ''}
+      </p>
+
+      ${embedUrl
+        ? `<div class="video-embed"><iframe src="${embedUrl}" allowfullscreen loading="lazy"></iframe></div>`
+        : demon.video_url
+          ? `<p><a href="${demon.video_url}" target="_blank" rel="noopener">Watch verification video</a></p>`
+          : ''
+      }
+
+      <div class="level-stats">
+        <div><span class="stat-label">Points (100%)</span><span class="stat-value">${demon.points}</span></div>
+        <div><span class="stat-label">Min % to record</span><span class="stat-value">${demon.min_percent}%</span></div>
+        ${demon.level_id ? `<div><span class="stat-label">Level ID</span><span class="stat-value">${escapeHTML(String(demon.level_id))}</span></div>` : ''}
+      </div>
+
+      <h2>Records (${records.length})</h2>
+      <table class="board">
+        <thead><tr><th>Player</th><th>Progress</th><th>Video</th></tr></thead>
+        <tbody>
+          ${records.length ? records.map(r => `
+            <tr>
+              <td class="player-cell">${playerCellHTML(r.profiles)}</td>
+              <td>${r.progress}%</td>
+              <td>${r.video_url ? `<a href="${r.video_url}" target="_blank" rel="noopener">watch</a>` : ''}</td>
+            </tr>
+          `).join('') : '<tr><td colspan="3">No approved records yet.</td></tr>'}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    container.innerHTML = `<p class="form-message error">Failed to load level: ${err.message}</p>`;
   }
 }
 
@@ -195,9 +294,13 @@ async function loadLeaderboard() {
     const rows = await getLeaderboard();
     body.innerHTML = rows.length ? rows.map((r, i) => `
       <tr>
-        <td>${i + 1}</td>
-        <td>${escapeHTML(r.username)}</td>
-        <td>${r.points}</td>
+        <td>#${i + 1}</td>
+        <td class="player-cell">
+          ${r.nationality ? flagImg(r.nationality) : ''}
+          ${r.clan ? `<span class="clan-tag">[${escapeHTML(r.clan)}]</span>` : ''}
+          <span class="player-name">${escapeHTML(r.display_name || r.username)}</span>
+        </td>
+        <td class="points-cell">${r.points}</td>
         <td>${r.demons_completed}</td>
       </tr>
     `).join('') : '<tr><td colspan="4">No completions yet.</td></tr>';
@@ -291,7 +394,7 @@ async function loadAdminView() {
     const pending = await getPendingRecords();
     body.innerHTML = pending.length ? pending.map(r => `
       <tr>
-        <td>${escapeHTML(r.profiles?.username ?? r.player_id)}</td>
+        <td class="player-cell">${playerCellHTML(r.profiles)}</td>
         <td>${escapeHTML(r.demons?.name ?? r.demon_id)}</td>
         <td>${r.progress}%</td>
         <td><a href="${r.video_url}" target="_blank" rel="noopener">watch</a></td>
@@ -322,7 +425,7 @@ async function loadAdminView() {
     const pendingLevels = await getPendingLevelSubmissions();
     levelsBody.innerHTML = pendingLevels.length ? pendingLevels.map(s => `
       <tr>
-        <td>${escapeHTML(s.profiles?.username ?? s.submitted_by)}</td>
+        <td class="player-cell">${playerCellHTML(s.profiles)}</td>
         <td>${escapeHTML(s.level_name)}${s.level_id ? ` (ID ${s.level_id})` : ''}</td>
         <td>${s.creator ? escapeHTML(s.creator) : ''}</td>
         <td><a href="${s.video_url}" target="_blank" rel="noopener">watch</a></td>
@@ -358,7 +461,7 @@ async function loadAllRecords(usernameFilter) {
     const records = await getAllRecords(usernameFilter);
     body.innerHTML = records.length ? records.map(r => `
       <tr>
-        <td>${escapeHTML(r.profiles?.username ?? r.player_id)}</td>
+        <td class="player-cell">${playerCellHTML(r.profiles)}</td>
         <td>${escapeHTML(r.demons?.name ?? r.demon_id)}</td>
         <td>${r.progress}%</td>
         <td class="status-${r.status}">${escapeHTML(r.status)}</td>
