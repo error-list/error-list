@@ -317,8 +317,13 @@ document.getElementById('add-demon-form').addEventListener('submit', async (e) =
   const msg = document.getElementById('add-demon-message');
   msg.textContent = ''; msg.className = 'form-message';
   try {
+    const levelId = Number(document.getElementById('ad-levelid').value);
+    if (!levelId || levelId < 1) {
+      throw new Error('A valid GD Level ID is required.');
+    }
     await addDemon({
       name: document.getElementById('ad-name').value,
+      levelId,
       position: Number(document.getElementById('ad-position').value),
       videoUrl: document.getElementById('ad-video').value || null,
       publisher: document.getElementById('ad-publisher').value || null,
