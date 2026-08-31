@@ -126,6 +126,25 @@
       <div id="account-logged-in" class="hidden">
         <h1>Your Account</h1>
         <p id="account-details"></p>
+
+        <h2>Profile</h2>
+        <p class="subtext">Shown on the leaderboard and your records — display name, flag, and clan tag.</p>
+        <form id="profile-form" class="form">
+          <label>Display Name
+            <input type="text" id="profile-display-name" maxlength="30" placeholder="Leave blank to use your username" />
+          </label>
+          <label>Nationality
+            <select id="profile-nationality">
+              <option value="">— None —</option>
+            </select>
+          </label>
+          <label>Clan Tag
+            <input type="text" id="profile-clan" maxlength="10" placeholder="e.g. WBT" />
+          </label>
+          <button type="submit">Save Profile</button>
+          <p class="form-message" id="profile-message"></p>
+        </form>
+
         <button id="logout-btn">Log Out</button>
       </div>
     </section>

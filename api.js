@@ -89,6 +89,21 @@ export async function getCurrentProfile() {
   return data;
 }
 
+/**
+ * Update the logged-in user's display name, nationality (ISO 3166-1 alpha-2
+ * code, e.g. "US"), and clan tag. Any field left out/undefined is cleared.
+ * Goes through a SECURITY DEFINER RPC so it can never touch role/banned.
+ */
+export async function updateMyProfile({ displayName, nationality, clan }) {
+  const { data, error } = await client().rpc('update_my_profile', {
+    p_display_name: displayName ?? null,
+    p_nationality: nationality ?? null,
+    p_clan: clan ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
 /** Fires `callback(user)` whenever auth state changes (login/logout). */
 export function onAuthChange(callback) {
   return client().auth.onAuthStateChange((_event, session) => {

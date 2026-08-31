@@ -1,6 +1,6 @@
 import {
   getCurrentUser, getCurrentProfile, onAuthChange,
-  signIn, signUp, signOut,
+  signIn, signUp, signOut, updateMyProfile,
   getDemonList, addDemon, deleteDemon,
   submitRecord, getMyRecords,
   getPendingRecords, reviewRecord, getAllRecords, deleteRecord,
@@ -10,6 +10,40 @@ import {
 } from './api.js';
 
 let currentProfile = null;
+
+// ----------------------------------------------------------------------------
+// NATIONALITY <select> — built once from ISO 3166-1 alpha-2 codes
+// ----------------------------------------------------------------------------
+const COUNTRY_CODES = ["AD","AE","AF","AG","AI","AL","AM","AO","AR","AS","AT","AU","AW","AX","AZ","BA","BB","BD","BE","BF","BG","BH","BI","BJ","BL","BM","BN","BO","BQ","BR","BS","BT","BW","BY","BZ","CA","CC","CD","CF","CG","CH","CI","CK","CL","CM","CN","CO","CR","CU","CV","CW","CX","CY","CZ","DE","DJ","DK","DM","DO","DZ","EC","EE","EG","EH","ER","ES","ET","FI","FJ","FK","FM","FO","FR","GA","GB","GD","GE","GF","GG","GH","GI","GL","GM","GN","GP","GQ","GR","GS","GT","GU","GW","GY","HK","HN","HR","HT","HU","ID","IE","IL","IM","IN","IO","IQ","IR","IS","IT","JE","JM","JO","JP","KE","KG","KH","KI","KM","KN","KP","KR","KW","KY","KZ","LA","LB","LC","LI","LK","LR","LS","LT","LU","LV","LY","MA","MC","MD","ME","MF","MG","MH","MK","ML","MM","MN","MO","MP","MQ","MR","MS","MT","MU","MV","MW","MX","MY","MZ","NA","NC","NE","NF","NG","NI","NL","NO","NP","NR","NU","NZ","OM","PA","PE","PF","PG","PH","PK","PL","PM","PN","PR","PS","PT","PW","PY","QA","RE","RO","RS","RU","RW","SA","SB","SC","SD","SE","SG","SH","SI","SJ","SK","SL","SM","SN","SO","SR","SS","ST","SV","SX","SY","SZ","TC","TD","TF","TG","TH","TJ","TK","TL","TM","TN","TO","TR","TT","TV","TW","TZ","UA","UG","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","YE","YT","ZA","ZM","ZW"];
+
+function flagEmoji(code) {
+  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
+function populateNationalitySelect() {
+  const select = document.getElementById('profile-nationality');
+  if (!select || select.dataset.populated) return;
+  const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+  const options = COUNTRY_CODES
+    .map(code => ({ code, name: regionNames.of(code) || code }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  for (const { code, name } of options) {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = `${flagEmoji(code)} ${name}`;
+    select.appendChild(opt);
+  }
+  select.dataset.populated = 'true';
+}
+populateNationalitySelect();
+
+/** "[CLAN] Display Name" (or flag-prefixed) — falls back to username if no display name is set. */
+function formatPlayerName(profile) {
+  if (!profile) return '';
+  const name = profile.display_name || profile.username;
+  const tag = profile.clan ? `[${profile.clan}] ` : '';
+  return `${tag}${name}`;
+}
 
 // ----------------------------------------------------------------------------
 // NAVIGATION
@@ -42,9 +76,14 @@ async function refreshAuthUI() {
     currentProfile = await getCurrentProfile();
     loggedOut.classList.add('hidden');
     loggedIn.classList.remove('hidden');
+    const flag = currentProfile.nationality ? `${flagEmoji(currentProfile.nationality)} ` : '';
     document.getElementById('account-details').textContent =
-      `Logged in as ${currentProfile.username} — role: ${currentProfile.role}`;
+      `Logged in as ${flag}${formatPlayerName(currentProfile)} (${currentProfile.username}) — role: ${currentProfile.role}`;
     adminTab.classList.toggle('hidden', currentProfile.role === 'user');
+
+    document.getElementById('profile-display-name').value = currentProfile.display_name ?? '';
+    document.getElementById('profile-nationality').value = currentProfile.nationality ?? '';
+    document.getElementById('profile-clan').value = currentProfile.clan ?? '';
   } else {
     currentProfile = null;
     loggedOut.classList.remove('hidden');
@@ -58,6 +97,25 @@ onAuthChange(() => refreshAuthUI());
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await signOut();
   showView('list');
+});
+
+document.getElementById('profile-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('profile-message');
+  msg.textContent = ''; msg.className = 'form-message';
+  try {
+    currentProfile = await updateMyProfile({
+      displayName: document.getElementById('profile-display-name').value,
+      nationality: document.getElementById('profile-nationality').value,
+      clan: document.getElementById('profile-clan').value,
+    });
+    const flag = currentProfile.nationality ? `${flagEmoji(currentProfile.nationality)} ` : '';
+    document.getElementById('account-details').textContent =
+      `Logged in as ${flag}${formatPlayerName(currentProfile)} (${currentProfile.username}) — role: ${currentProfile.role}`;
+    msg.textContent = 'Profile saved.'; msg.classList.add('success');
+  } catch (err) {
+    msg.textContent = err.message; msg.classList.add('error');
+  }
 });
 
 // login/register toggle
