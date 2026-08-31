@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ERROR List</title>
+</head>
+<body>
+  <h1>ERROR List</h1>
+
+  <div id="auth-status">Checking login status...</div>
+
+  <h2>Demon List</h2>
+  <ul id="demon-list">Loading...</ul>
+
+  <!-- Load in order: connect to Supabase first, then run app logic -->
+  <script type="module" src="supabaseClient.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
