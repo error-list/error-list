@@ -120,7 +120,7 @@ async function loadDemonList() {
         </div>
         <div class="points">${d.points} pts</div>
       </div>
-    `).join('') : '<p class="subtext">No demons on the list yet.</p>';
+    `).join('') : '<p class="subtext">No levels on the list yet.</p>';
   } catch (err) {
     el.innerHTML = `<p class="form-message error">Failed to load list: ${err.message}</p>`;
   }
