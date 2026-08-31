@@ -4,6 +4,8 @@ import {
   getDemonList, addDemon, deleteDemon,
   submitRecord, getMyRecords,
   getPendingRecords, reviewRecord,
+  submitLevel, getMyLevelSubmissions,
+  getPendingLevelSubmissions, reviewLevelSubmission,
   getLeaderboard, getPlayerProfile, setUserRole,
 } from './api.js';
 
@@ -152,6 +154,8 @@ async function loadSubmitView() {
   const user = await getCurrentUser();
   document.getElementById('submit-logged-out').classList.toggle('hidden', !!user);
   document.getElementById('submit-form').classList.toggle('hidden', !user);
+  document.getElementById('suggest-logged-out').classList.toggle('hidden', !!user);
+  document.getElementById('suggest-form').classList.toggle('hidden', !user);
 
   if (user) {
     const select = document.getElementById('submit-demon');
@@ -168,8 +172,38 @@ async function loadSubmitView() {
         <td>${r.reject_reason ? escapeHTML(r.reject_reason) : ''}</td>
       </tr>
     `).join('') : '<tr><td colspan="4">No records submitted yet.</td></tr>';
+
+    const suggBody = document.getElementById('my-suggestions-body');
+    const suggestions = await getMyLevelSubmissions();
+    suggBody.innerHTML = suggestions.length ? suggestions.map(s => `
+      <tr>
+        <td>${escapeHTML(s.level_name)}</td>
+        <td class="status-${s.status}">${s.status}</td>
+        <td>${s.reject_reason ? escapeHTML(s.reject_reason) : ''}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="3">No suggestions submitted yet.</td></tr>';
   }
 }
+
+document.getElementById('suggest-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('suggest-message');
+  msg.textContent = ''; msg.className = 'form-message';
+  try {
+    await submitLevel({
+      levelName: document.getElementById('suggest-name').value,
+      levelId: Number(document.getElementById('suggest-levelid').value) || null,
+      videoUrl: document.getElementById('suggest-video').value,
+      creator: document.getElementById('suggest-creator').value,
+      note: document.getElementById('suggest-note').value,
+    });
+    msg.textContent = 'Suggested! Waiting on staff review.'; msg.classList.add('success');
+    e.target.reset();
+    loadSubmitView();
+  } catch (err) {
+    msg.textContent = err.message; msg.classList.add('error');
+  }
+});
 
 document.getElementById('submit-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -223,6 +257,37 @@ async function loadAdminView() {
   const adminOnly = document.getElementById('admin-only');
   adminOnly.classList.toggle('hidden', currentProfile?.role !== 'admin');
   if (currentProfile?.role === 'admin') loadManageDemons();
+
+  const levelsBody = document.getElementById('pending-levels-body');
+  try {
+    const pendingLevels = await getPendingLevelSubmissions();
+    levelsBody.innerHTML = pendingLevels.length ? pendingLevels.map(s => `
+      <tr>
+        <td>${escapeHTML(s.profiles?.username ?? s.submitted_by)}</td>
+        <td>${escapeHTML(s.level_name)}${s.level_id ? ` (ID ${s.level_id})` : ''}</td>
+        <td>${s.creator ? escapeHTML(s.creator) : ''}</td>
+        <td><a href="${s.video_url}" target="_blank" rel="noopener">watch</a></td>
+        <td>${s.note ? escapeHTML(s.note) : ''}</td>
+        <td>
+          <button class="mini-btn approve" data-level-id="${s.id}" data-level-action="approved">Approve</button>
+          <button class="mini-btn reject" data-level-id="${s.id}" data-level-action="rejected">Reject</button>
+        </td>
+      </tr>
+    `).join('') : '<tr><td colspan="6">Nothing pending.</td></tr>';
+
+    levelsBody.querySelectorAll('button[data-level-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const reason = btn.dataset.levelAction === 'rejected' ? prompt('Reason for rejecting (optional):') || null : null;
+        await reviewLevelSubmission(Number(btn.dataset.levelId), { status: btn.dataset.levelAction, rejectReason: reason });
+        if (btn.dataset.levelAction === 'approved') {
+          alert('Marked approved. Now add it properly from "Add a Demon" below so you can set its position.');
+        }
+        loadAdminView();
+      });
+    });
+  } catch (err) {
+    levelsBody.innerHTML = `<tr><td colspan="6" class="form-message error">${err.message}</td></tr>`;
+  }
 }
 
 async function loadManageDemons() {
