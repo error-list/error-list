@@ -198,6 +198,14 @@ function youtubeThumbnail(url) {
   return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null;
 }
 
+/** Swap a broken thumbnail <img> for the striped placeholder, keeping the rank visible. */
+window.handleThumbError = function (img, position) {
+  const placeholder = document.createElement('div');
+  placeholder.className = 'demon-thumb placeholder';
+  placeholder.textContent = `#${position}`;
+  img.replaceWith(placeholder);
+};
+
 async function loadDemonList() {
   const el = document.getElementById('demon-list');
   try {
@@ -205,12 +213,12 @@ async function loadDemonList() {
     const countEl = document.getElementById('level-count');
     if (countEl) countEl.textContent = demons.length ? ` \u2014 ${demons.length} tracked` : '';
     el.innerHTML = demons.length ? demons.map(d => {
-      const thumb = youtubeThumbnail(d.video_url);
+      const thumb = d.thumbnail_url || youtubeThumbnail(d.video_url);
       return `
       <div class="demon-row" data-demon-id="${d.id}">
         <div class="thumb-wrap">
           ${thumb
-            ? `<img class="demon-thumb" src="${thumb}" alt="" loading="lazy">`
+            ? `<img class="demon-thumb" src="${thumb}" alt="" loading="lazy" onerror="handleThumbError(this, ${d.position})">`
             : `<div class="demon-thumb placeholder">#${d.position}</div>`}
         </div>
         <div class="info">
@@ -549,6 +557,7 @@ document.getElementById('add-demon-form').addEventListener('submit', async (e) =
       levelId,
       position: Number(document.getElementById('ad-position').value),
       videoUrl: document.getElementById('ad-video').value || null,
+      thumbnailUrl: document.getElementById('ad-thumbnail').value || null,
       publisher: document.getElementById('ad-publisher').value || null,
       verifier: document.getElementById('ad-verifier').value || null,
       minPercent: Number(document.getElementById('ad-minpercent').value) || 100,

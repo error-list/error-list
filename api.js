@@ -132,7 +132,7 @@ export async function getDemon(id) {
 }
 
 /** Admin only (enforced server-side by RLS regardless of who calls this). */
-export async function addDemon({ name, position, videoUrl, publisher, verifier, levelId, minPercent }) {
+export async function addDemon({ name, position, videoUrl, publisher, verifier, levelId, minPercent, thumbnailUrl }) {
   const { data, error } = await client()
     .from('demons')
     .insert({
@@ -143,6 +143,7 @@ export async function addDemon({ name, position, videoUrl, publisher, verifier, 
       verifier,
       level_id: levelId,
       min_percent: minPercent ?? 100,
+      thumbnail_url: thumbnailUrl || null,
     })
     .select()
     .single();
