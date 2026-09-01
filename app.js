@@ -6,7 +6,7 @@ import {
   getPendingRecords, reviewRecord, getAllRecords, deleteRecord,
   submitLevel, getMyLevelSubmissions,
   getPendingLevelSubmissions, reviewLevelSubmission,
-  getLeaderboard, getPlayerProfile, setUserRole,
+  getLeaderboard, getPlayerProfile, setUserRole, setUserBanned,
 } from './api.js';
 
 let currentProfile = null;
@@ -620,15 +620,40 @@ document.getElementById('add-demon-form').addEventListener('submit', async (e) =
   }
 });
 
-document.getElementById('role-form').addEventListener('submit', async (e) => {
+let editingUserId = null;
+
+document.getElementById('user-lookup-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const msg = document.getElementById('role-message');
+  const msg = document.getElementById('user-lookup-message');
   msg.textContent = ''; msg.className = 'form-message';
+  document.getElementById('user-edit-panel').classList.add('hidden');
   try {
-    const profile = await getPlayerProfile(document.getElementById('role-username').value);
-    await setUserRole(profile.id, document.getElementById('role-select').value);
-    msg.textContent = `Updated ${profile.username}'s role.`; msg.classList.add('success');
-    e.target.reset();
+    const profile = await getPlayerProfile(document.getElementById('user-lookup-username').value.trim());
+    editingUserId = profile.id;
+    document.getElementById('user-edit-heading').textContent =
+      `Editing ${profile.username}${profile.banned ? ' (currently banned)' : ''}`;
+    document.getElementById('user-edit-role').value = profile.role ?? 'user';
+    document.getElementById('user-edit-banned').checked = !!profile.banned;
+    document.getElementById('user-edit-message').textContent = '';
+    document.getElementById('user-edit-panel').classList.remove('hidden');
+  } catch (err) {
+    msg.textContent = `Couldn't find that user: ${err.message}`; msg.classList.add('error');
+  }
+});
+
+document.getElementById('user-edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('user-edit-message');
+  msg.textContent = ''; msg.className = 'form-message';
+  if (!editingUserId) return;
+  try {
+    const role = document.getElementById('user-edit-role').value;
+    const banned = document.getElementById('user-edit-banned').checked;
+    await setUserRole(editingUserId, role);
+    await setUserBanned(editingUserId, banned);
+    msg.textContent = 'User updated.'; msg.classList.add('success');
+    document.getElementById('user-edit-heading').textContent =
+      `Editing ${document.getElementById('user-lookup-username').value.trim()}${banned ? ' (currently banned)' : ''}`;
   } catch (err) {
     msg.textContent = err.message; msg.classList.add('error');
   }

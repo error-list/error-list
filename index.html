@@ -217,19 +217,32 @@
           <tbody id="manage-demons-body"><tr><td colspan="6">Loading&hellip;</td></tr></tbody>
         </table>
 
-        <h2>Change a User's Role</h2>
-        <form id="role-form" class="form">
-          <label>Username <input type="text" id="role-username" required /></label>
-          <label>Role
-            <select id="role-select">
-              <option value="user">user</option>
-              <option value="moderator">moderator</option>
-              <option value="admin">admin</option>
-            </select>
-          </label>
-          <button type="submit">Update Role</button>
-          <p class="form-message" id="role-message"></p>
+        <h2>Manage Users</h2>
+        <p class="subtext">Admins only. Look up a player by username to change their role or ban/unban them.</p>
+        <form id="user-lookup-form" class="form">
+          <label>Username <input type="text" id="user-lookup-username" required /></label>
+          <button type="submit">Look up</button>
+          <p class="form-message" id="user-lookup-message"></p>
         </form>
+
+        <div id="user-edit-panel" class="hidden">
+          <p class="subtext" id="user-edit-heading"></p>
+          <form id="user-edit-form" class="form">
+            <label>Role
+              <select id="user-edit-role">
+                <option value="user">user</option>
+                <option value="moderator">moderator</option>
+                <option value="admin">admin</option>
+              </select>
+            </label>
+            <label style="flex-direction: row; align-items: center; gap: 8px;">
+              <input type="checkbox" id="user-edit-banned" style="width: auto;" />
+              Banned (blocks login and submissions)
+            </label>
+            <button type="submit">Save changes</button>
+            <p class="form-message" id="user-edit-message"></p>
+          </form>
+        </div>
       </div>
     </section>
 
