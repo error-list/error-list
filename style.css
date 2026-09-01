@@ -37,7 +37,7 @@ body {
   inset: 0;
   z-index: 0;
   background: url('bg.jpg') center center / cover no-repeat;
-  opacity: 0.2;
+  opacity: 0.05;
   pointer-events: none;
 }
 
@@ -51,7 +51,7 @@ body {
 .bg-deco span {
   position: absolute;
   border-style: solid;
-  opacity: 0.5;
+  opacity: 0.75;
 }
 /* stacked triangular spikes, left edge */
 .bg-deco .t1 { left: -60px; top: 12%; border-width: 0 70px 120px 70px; border-color: transparent transparent var(--red-dim) transparent; transform: rotate(-8deg); opacity: 0.35; }
