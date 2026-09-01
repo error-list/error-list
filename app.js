@@ -192,29 +192,44 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
 // ----------------------------------------------------------------------------
 // DEMON LIST
 // ----------------------------------------------------------------------------
+function youtubeThumbnail(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null;
+}
+
 async function loadDemonList() {
   const el = document.getElementById('demon-list');
   try {
     const demons = await getDemonList();
-    el.innerHTML = demons.length ? demons.map(d => `
+    const countEl = document.getElementById('level-count');
+    if (countEl) countEl.textContent = demons.length ? ` \u2014 ${demons.length} tracked` : '';
+    el.innerHTML = demons.length ? demons.map(d => {
+      const thumb = youtubeThumbnail(d.video_url);
+      return `
       <div class="demon-row" data-demon-id="${d.id}">
-        <div class="pos">#${d.position}</div>
+        <div class="thumb-wrap">
+          ${thumb
+            ? `<img class="demon-thumb" src="${thumb}" alt="" loading="lazy">`
+            : `<div class="demon-thumb placeholder">#${d.position}</div>`}
+        </div>
         <div class="info">
-          <div class="name">${escapeHTML(d.name)}</div>
+          <div class="name"><span class="rank">#${d.position}</span> ${escapeHTML(d.name)}</div>
           <div class="meta">
-            ${d.publisher ? `by ${escapeHTML(d.publisher)}` : ''}
-            ${d.verifier ? ` &middot; verified by ${escapeHTML(d.verifier)}` : ''}
-            ${d.video_url ? ` &middot; <a href="${d.video_url}" target="_blank" rel="noopener">video</a>` : ''}
-            ${d.level_id ? ` &middot; ID ${escapeHTML(String(d.level_id))}` : ''}
+            ${d.publisher ? escapeHTML(d.publisher) : ''}
+            ${d.verifier ? `<span class="sep">|</span> <span class="verifier">${escapeHTML(d.verifier)}</span>` : ''}
+            <span class="sep">&middot;</span> ${d.min_percent}% <span class="range-arrow">&mdash;</span> <span class="pts-inline">${d.points} points</span>
+            ${d.level_id ? `<span class="sep">&middot;</span> ID ${escapeHTML(String(d.level_id))}` : ''}
           </div>
         </div>
-        <div class="points">${d.points} pts</div>
+        ${d.video_url ? `<a class="watch-link" href="${d.video_url}" target="_blank" rel="noopener">watch</a>` : ''}
       </div>
-    `).join('') : '<p class="subtext">No levels on the list yet.</p>';
+    `;
+    }).join('') : '<p class="subtext">No levels on the list yet.</p>';
 
     el.querySelectorAll('.demon-row').forEach(row => {
       row.addEventListener('click', (e) => {
-        if (e.target.closest('a')) return; // let the "video" link open normally
+        if (e.target.closest('a')) return; // let the "watch" link open normally
         showLevelDetail(Number(row.dataset.demonId));
       });
     });
