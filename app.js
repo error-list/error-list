@@ -1,7 +1,7 @@
 import {
   getCurrentUser, getCurrentProfile, onAuthChange,
   signIn, signUp, signOut, updateMyProfile,
-  getDemonList, getDemon, addDemon, deleteDemon,
+  getDemonList, getDemon, addDemon, updateDemon, deleteDemon,
   submitRecord, getMyRecords, getRecordsForDemon,
   getPendingRecords, reviewRecord, getAllRecords, deleteRecord,
   submitLevel, getMyLevelSubmissions,
@@ -520,6 +520,8 @@ document.getElementById('records-filter').addEventListener('keydown', (e) => {
   }
 });
 
+let editingDemonId = null;
+
 async function loadManageDemons() {
   const body = document.getElementById('manage-demons-body');
   const demons = await getDemonList();
@@ -529,6 +531,7 @@ async function loadManageDemons() {
       <td>${escapeHTML(d.name)}</td>
       <td>${d.level_id ? escapeHTML(String(d.level_id)) : '—'}</td>
       <td>${d.points}</td>
+      <td><button class="mini-btn" data-edit-id="${d.id}">Edit</button></td>
       <td><button class="mini-btn reject" data-delete-id="${d.id}">Delete</button></td>
     </tr>
   `).join('');
@@ -537,11 +540,50 @@ async function loadManageDemons() {
     btn.addEventListener('click', async () => {
       if (!confirm('Delete this demon from the list?')) return;
       await deleteDemon(Number(btn.dataset.deleteId));
+      if (editingDemonId === Number(btn.dataset.deleteId)) exitEditMode();
       loadManageDemons();
       loadDemonList();
     });
   });
+
+  body.querySelectorAll('[data-edit-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.editId);
+      const demon = demons.find(d => d.id === id) ?? await getDemon(id);
+      enterEditMode(demon);
+    });
+  });
 }
+
+function enterEditMode(demon) {
+  editingDemonId = demon.id;
+  document.getElementById('ad-name').value = demon.name ?? '';
+  document.getElementById('ad-levelid').value = demon.level_id ?? '';
+  document.getElementById('ad-position').value = demon.position ?? '';
+  document.getElementById('ad-video').value = demon.video_url ?? '';
+  document.getElementById('ad-thumbnail').value = demon.thumbnail_url ?? '';
+  document.getElementById('ad-publisher').value = demon.publisher ?? '';
+  document.getElementById('ad-verifier').value = demon.verifier ?? '';
+  document.getElementById('ad-minpercent').value = demon.min_percent ?? 100;
+
+  document.getElementById('add-demon-heading').textContent = `Edit Level: ${demon.name}`;
+  document.getElementById('add-demon-submit').textContent = 'Save changes';
+  document.getElementById('add-demon-cancel').classList.remove('hidden');
+  document.getElementById('add-demon-message').textContent = '';
+  document.getElementById('add-demon-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function exitEditMode() {
+  editingDemonId = null;
+  document.getElementById('add-demon-form').reset();
+  document.getElementById('ad-minpercent').value = 100;
+  document.getElementById('add-demon-heading').textContent = 'Add a Level';
+  document.getElementById('add-demon-submit').textContent = 'Add level';
+  document.getElementById('add-demon-cancel').classList.add('hidden');
+  document.getElementById('add-demon-message').textContent = '';
+}
+
+document.getElementById('add-demon-cancel').addEventListener('click', exitEditMode);
 
 document.getElementById('add-demon-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -552,7 +594,7 @@ document.getElementById('add-demon-form').addEventListener('submit', async (e) =
     if (!levelId || levelId < 1) {
       throw new Error('A valid GD Level ID is required.');
     }
-    await addDemon({
+    const fields = {
       name: document.getElementById('ad-name').value,
       levelId,
       position: Number(document.getElementById('ad-position').value),
@@ -561,9 +603,16 @@ document.getElementById('add-demon-form').addEventListener('submit', async (e) =
       publisher: document.getElementById('ad-publisher').value || null,
       verifier: document.getElementById('ad-verifier').value || null,
       minPercent: Number(document.getElementById('ad-minpercent').value) || 100,
-    });
-    msg.textContent = 'Demon added.'; msg.classList.add('success');
-    e.target.reset();
+    };
+    if (editingDemonId) {
+      await updateDemon(editingDemonId, fields);
+      msg.textContent = 'Level updated.'; msg.classList.add('success');
+      exitEditMode();
+    } else {
+      await addDemon(fields);
+      msg.textContent = 'Demon added.'; msg.classList.add('success');
+      e.target.reset();
+    }
     loadManageDemons();
     loadDemonList();
   } catch (err) {

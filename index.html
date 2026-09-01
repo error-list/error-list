@@ -194,7 +194,7 @@
       </table>
 
       <div id="admin-only" class="hidden">
-        <h2>Add a Level</h2>
+        <h2 id="add-demon-heading">Add a Level</h2>
         <form id="add-demon-form" class="form">
           <label>Name <input type="text" id="ad-name" required /></label>
           <label>GD Level ID <input type="number" id="ad-levelid" min="1" required /></label>
@@ -204,14 +204,17 @@
           <label>Publisher <input type="text" id="ad-publisher" /></label>
           <label>Verifier <input type="text" id="ad-verifier" /></label>
           <label>Min % to count <input type="number" id="ad-minpercent" min="1" max="100" value="100" /></label>
-          <button type="submit">Add level</button>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="submit" id="add-demon-submit">Add level</button>
+            <button type="button" id="add-demon-cancel" class="mini-btn hidden">Cancel edit</button>
+          </div>
           <p class="form-message" id="add-demon-message"></p>
         </form>
 
         <h2>Manage Level</h2>
         <table class="board" id="manage-demons-table">
-          <thead><tr><th>#</th><th>Name</th><th>GD ID</th><th>Points</th><th>Delete</th></tr></thead>
-          <tbody id="manage-demons-body"><tr><td colspan="5">Loading&hellip;</td></tr></tbody>
+          <thead><tr><th>#</th><th>Name</th><th>GD ID</th><th>Points</th><th>Edit</th><th>Delete</th></tr></thead>
+          <tbody id="manage-demons-body"><tr><td colspan="6">Loading&hellip;</td></tr></tbody>
         </table>
 
         <h2>Change a User's Role</h2>

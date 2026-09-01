@@ -161,6 +161,7 @@ export async function updateDemon(id, fields) {
   if (fields.verifier !== undefined) patch.verifier = fields.verifier;
   if (fields.levelId !== undefined) patch.level_id = fields.levelId;
   if (fields.minPercent !== undefined) patch.min_percent = fields.minPercent;
+  if (fields.thumbnailUrl !== undefined) patch.thumbnail_url = fields.thumbnailUrl;
   if (fields.points !== undefined) { patch.points = fields.points; patch.points_override = true; }
 
   const { data, error } = await client().from('demons').update(patch).eq('id', id).select().single();
